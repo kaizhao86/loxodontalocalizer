@@ -1,0 +1,115 @@
+<html>
+<head>
+  <title>Create Haplotype</title>
+  <script src="https://use.fontawesome.com/64dfa4ece3.js"></script>
+  <script src="{{ staticPrefix }}/static/js/external/jquery/jquery.js"></script>
+  <script type="application/javascript" src="{{ staticPrefix }}/static/js/selectize.min.js"></script>
+  <script type="text/javascript"
+          src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCgkpTy0LBHXMSn5laRkqjEzCdUFEARgV4"></script>
+  <link rel="stylesheet" href="{{ staticPrefix }}/static/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="/static/css/loxloc.css">
+  <script src="{{ staticPrefix }}/static/js/popper.min.js"></script>
+  <script src="{{ staticPrefix }}/static/js/bootstrap.min.js"></script>
+      <style type="text/css">
+         .BoxGlow_Grey2{
+         box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         -webkit-box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         -moz-box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         }
+         textarea#textarea-seq{
+         font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Typewriter', monospace;
+         }
+      </style>
+
+  <script type="application/javascript">
+    "use strict";
+
+
+
+    // using jQuery
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function postForm(){
+      var seq = $("#seq").val().toUpperCase().trim();
+      if(seq.length<300 || seq>400){
+        return;
+      }
+      $("#saveSuccessMsg").html("");
+      $("#saveFailedMsg").html("");
+
+      var data = {csrfmiddlewaretoken: getCookie('csrftoken'),
+        "seq":seq};
+      $.ajax({
+        type: "POST",
+        url: "/mapping/createHaplotypeJson/",
+        data: data,
+        success: function(data){
+          var status = data["status"];
+          if(status=="success"){
+            $('#saveBtn').hide()
+            $("#saveSuccess").show()
+            $("#saveFailed").hide()
+            $("#saveSuccessMsg").html("Saved as '"+data["pk"]+"'");
+          }else{
+            $("#saveFailed").show()
+            $("#saveFailedMsg").html(data["error"]);
+          }
+        },
+        dataType: "json"
+      });
+    }
+
+
+  </script>
+
+</head>
+<body>
+
+<div id="titlePanel"><a href="{{urlPrefix}}/mapping/admin/" style="color:#000;text-decoration:none"><i>Loxodonta</i> Localizer</a> Create Haplotype</div>
+
+<div>
+
+
+  <form>
+
+    <!-- Columns are always 50% wide, on mobile and desktop -->
+    <div class="row"><div class="col-12"><em>IDs will be generated and duplicates will be detected upon submission.</em></div></div>
+    <div class="row">
+      <div class="col-2"><label>Sequence&nbsp;&nbsp;</label></div>
+      <div class="col-10"><textarea id="seq" name="seq" style="width:600px;height:200px;font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Typewriter', monospace;"></textarea></div>
+    </div>
+<div class="row">
+  <div class="col-3"> <button type="button" id="saveBtn" class="btn" onclick="postForm()">Save</button></div>
+</div>
+
+
+
+   <div class="alert alert-success" id="saveSuccess" style="display:none">
+  <strong>Save Successful&nbsp;</strong><span id="saveSuccessMsg"></span>
+</div>
+
+
+<div class="alert alert-warning" id="saveFailed" style="display:none">
+  <strong>Save Failed&nbsp;</strong><span id="saveFailedMsg"></span>
+</div>
+  </form>
+</div>
+<div id="map-outer" style="width:800px;float:left">
+  <div id="map-canvas" style="left:0px;z-index:0;width:800px;height:800px; position: absolute;"></div>
+</div>
+</body>
+</html>

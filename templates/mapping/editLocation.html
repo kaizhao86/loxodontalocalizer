@@ -1,0 +1,327 @@
+<html>
+<head>
+  <title>{% if location %}Edit{% else %}Create{% endif %} Location</title>
+  <script src="https://use.fontawesome.com/64dfa4ece3.js"></script>
+  <script src="{{ staticPrefix }}/static/js/external/jquery/jquery.js"></script>
+  <script type="application/javascript" src="{{ staticPrefix }}/static/js/selectize.min.js"></script>
+  <script type="text/javascript"
+          src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCgkpTy0LBHXMSn5laRkqjEzCdUFEARgV4"></script>
+  <link rel="stylesheet" href="{{ staticPrefix }}/static/css/bootstrap.min.css">
+  <script src="{{ staticPrefix }}/static/js/popper.min.js"></script>
+  <script src="{{ staticPrefix }}/static/js/bootstrap.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/loxloc.css">
+
+  <script type="application/javascript">
+    "use strict";
+
+    var markers = [];
+    var map;
+    var selectedPub;
+    var createMode = true;
+    {% if location %}
+      createMode = false;
+    {% endif %}
+    {% if elephant and elephant.author_id %}
+      selectedPub = {{  elephant.author_id }};
+    {% endif %}
+    var locDict = {{ locDict | safe }};
+
+    function initialize() {
+      var mapOptions = {
+        center: {
+          lat: -5,
+          lng: 17
+        },
+        zoom: 4,
+        draggable: true,
+        zoomControl: true,
+        scrollwheel: false,
+        disableDoubleClickZoom: true,
+        mapTypeId: google.maps.MapTypeId.TERRAIN
+      };
+      map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+      locationChanged(); //draws initial placemark
+    }
+
+
+    function setAllMap(map) {
+      for (var i = 0; i < markers.length; i++) {
+        markers[i].setMap(map);
+      }
+    }
+
+    function locationChanged() {
+      setAllMap(null); //deletes markers
+      markers = [];
+
+      var marker = new google.maps.Marker({
+        map: map,
+        title: $("#input-locationName").val().trim(),
+        label: $("#input-locationName").val().trim(),
+        optimized: true,
+        zIndex: 0,
+        position: {
+          lat:parseFloat($("#input-lat").val().trim()),
+          lng: parseFloat($("#input-lon").val().trim())
+        }
+      });
+      markers.push(marker);
+    }
+
+    // using jQuery
+    function getCookie(name) {
+      var cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = jQuery.trim(cookies[i]);
+          // Does this cookie string begin with the name we want?
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    function postForm() {
+      if (!checkForm()) {
+        return; //double-check if there's a form problem
+      }
+      var locationID = "";
+      {% if location %}
+        locationID = {{ location.id }};
+      {% endif %}
+
+      var newName = $("#input-locationName").val().trim();
+      var newType = $("#input-locationType").val().trim();
+      var newLocality = $("#input-locality").val().trim();
+      var newMatchNotes = $("#input-matchNotes").val().trim();
+      var newAccuracy = $("#select-accuracy").val();
+      var newLon = $("#input-lon").val();
+      var newLat = $("#input-lat").val();
+      var newLastEditNotes = $("#input-lastEditNotes").val().trim();
+      var data = {
+        csrfmiddlewaretoken: getCookie('csrftoken'),
+        "locationID": locationID,
+        "newName":newName,
+        "newType":newType,
+        "newLocality":newLocality,
+        "newMatchNotes":newMatchNotes,
+        "newAccuracy":newAccuracy,
+        "newLon":newLon,
+        "newLat":newLat,
+        "newLastEditNotes":newLastEditNotes
+
+      };
+      $.ajax({
+        type: "POST",
+        url: "/mapping/editLocationJson/",
+        data: data,
+        success: function (data) {
+          var status = data["status"];
+          if (status == "success") {
+            $('#saveBtn').hide()
+            $("#saveSuccess").show()
+            $("#saveFailed").hide()
+          } else {
+            $("#saveFailed").show()
+          }
+        },
+        dataType: "json"
+      });
+    }
+
+    function checkForm() {
+      //TODO update location from here
+      var oldName;
+      var oldType;
+      var oldLocality;
+      var oldMatchNotes;
+      var oldAccuracy;
+      var oldLon;
+      var oldLat;
+      var oldLastEditNotes;
+      {% if location %}
+        oldName = "{{  location.locationName }}";
+        oldType = "{{  location.locationType }}";
+        oldLocality = "{{  location.locality }}";
+        oldMatchNotes = "{{  location.matchNotes }}";
+        oldAccuracy = "{{  location.accuracy }}";
+        oldLon = "{{  location.lon }}";
+        oldLat = "{{  location.lat }}";
+        oldLastEditNotes = "{{ location.lastEditNotes }}";
+      {% endif %}
+      var newName = $("#input-locationName").val().trim();
+      var newType = $("#input-locationType").val().trim();
+      var newLocality = $("#input-locality").val().trim();
+      var newMatchNotes = $("#input-matchNotes").val().trim();
+      var newAccuracy = $("#select-accuracy").val();
+      var newLon = $("#input-lon").val();
+      var newLat = $("#input-lat").val();
+      var newLastEditNotes = $("#input-lastEditNotes").val().trim();
+      locationChanged()
+      if (newName != "" && newLocality != "" && newAccuracy !="" && newLon !=""
+          & newLat !="" &&
+          (oldLastEditNotes!=newLastEditNotes || oldName != newName || oldType != newType || oldLocality !=newLocality || oldMatchNotes !=newMatchNotes ||
+              oldAccuracy != newAccuracy || oldLon != newLon || oldLat!=newLat )) {
+        //If all fields are non-blank and something has changed, allow saving
+        $('#saveBtn').prop('disabled', false);
+        return true;
+      } else {
+        $('#saveBtn').prop('disabled', true);
+        return false;
+      }
+    }
+
+
+    $(document).ready(function () {
+
+
+      google.maps.event.addDomListener(window, 'load', initialize);
+      $('form').on('keyup change', 'input, select, textarea', checkForm);
+
+    });
+
+
+  </script>
+  <style>
+    #map-canvas {
+      height: 750px;
+      width: 900px;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="titlePanel"><a href="{{urlPrefix}}/mapping/admin/" style="color:#000;text-decoration:none"><i>Loxodonta</i> Localizer</a> {% if location %}Edit{% else %}Create{% endif %}  Location</div>
+
+
+
+<div>
+
+
+  <form>
+
+    <!-- Columns are always 50% wide, on mobile and desktop -->
+    {% if location %}
+      <div class="row">
+        <div class="col-3"><label>Location ID#</label></div>
+        <div class="col-5"><input type="text" id="location_id" name="location_id" value="{{ location.id }}"
+                                  readonly><br/></div>
+      </div>
+    {% endif %}
+
+    <div class="row">
+      <div class="col-3"><label for="input-locationName">Location Name</label></div>
+      <div class="col-5"><input type="text" id="input-locationName" name="input-locationName"
+                                value="{% if location %}{{ location.locationName }}{% endif %}"></div>
+    </div>
+
+    <div class="row">
+      <div class="col-3"><label for="input-locationType">Location Type</label></div>
+      <div class="col-5"><input type="text" id="input-locationType" name="input-locationType"
+                                value="{% if location %}{{ location.locationType }}{% endif %}"></div>
+    </div>
+
+    <div class="row">
+      <div class="col-3"><label for="input-locality">Locality</label></div>
+      <div class="col-5"><input type="text" id="input-locality" name="input-locality"
+                                value="{% if location %}{{ location.locality }}{% endif %}"></div>
+    </div>
+
+    <div class="row">
+      <div class="col-3"><label for="input-matchNotes">Match Notes (Visible to user)</label></div>
+      <div class="col-5"><input type="text" id="input-matchNotes" name="input-matchNotes"
+                                value="{% if location %}{{ location.matchNotes }}{% endif %}"></div>
+    </div>
+
+  <div class="row">
+      <div class="col-3"><label for="input-lastEditNotes">Editor's comments (Only for admins)</label></div>
+      <div class="col-5"><input type="text" id="input-lastEditNotes" name="input-lastEditNotes"
+                                value="{% if location %}{{ location.lastEditNotes }}{% endif %}"></div>
+    </div>
+
+    <div class="row">
+      <div class="col-3"><label for="select-accuracy">Accuracy</label></div>
+      <div class="col-5">
+        <select id="select-accuracy" name="select-accuracy" class="form-control" tabindex="2">
+          {% if not location %}
+            <option value="" selected hidden disabled>Choose a Accuracy Level</option>
+          {% endif %}
+
+          <option value="0" {% if location and location.accuracy == 0 %}selected{% endif %}>Country</option>
+          <option value="1" {% if location and location.accuracy == 1 %}selected{% endif %}>Region</option>
+          <option value="2" {% if location and location.accuracy == 2 %}selected{% endif %}>Locality</option>
+        </select>
+
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-3"><label for="input-lon">Longitude</label></div>
+      <div class="col-5"><input type="text" id="input-lon" name="input-lon"
+                                value="{% if location %}{{ location.lon }}{% endif %}"></div>
+    </div>
+
+    <div class="row">
+      <div class="col-3"><label for="input-lat">Latitude</label></div>
+      <div class="col-5"><input type="text" id="input-lat" name="input-latitude"
+                                value="{% if location %}{{ location.lat }}{% endif %}"></div>
+    </div>
+
+    {% if location %}
+      <div>
+        {% if hasElephants %}
+          <h3>Elephants at this location:</h3>
+                  <table class="table">
+         <thead>
+            <tr>
+              <th>ID</th>
+              <th>Haplotype ID</th>
+              <th>Genbank Accession</th>
+              <th>Author</th>
+              <th>Last Modified (US/Central)</th>
+            </tr>
+          </thead><tbody>
+
+          {% for elephant in elephantsAtThisLocation %}
+            <tr>
+              <th scope="row"><a href="/mapping/editElephant/{{ elephant.pk }}/">{{ elephant.pk }}</a></th>
+              <td>{{ elephant.haplotype.pk }}</td>
+              <td>{{ elephant.geneBankAccession }}</td>
+            <td>{{ elephant.author.author }}</td>
+            <td>{% load tz %}{% timezone "US/Central" %}{{ elephant.datetimeModified }}{% endtimezone %}</td>
+            </tr>
+
+          {% endfor %}
+
+         </tbody> </table>
+
+        {% else %}
+
+          <h3>No elephants at this location.</h3>
+        {% endif %}
+
+      </div>
+    {% endif %}
+
+    <button type="button" id="saveBtn" class="btn" onclick="postForm()" disabled>Save</button>
+    <div class="alert alert-success" id="saveSuccess" style="display:none">
+      <strong>Save Successful</strong>
+    </div>
+
+
+    <div class="alert alert-warning" id="saveFailed" style="display:none">
+      <strong>Save Failed!</strong><span id="saveFailedMsg"></span>
+    </div>
+  </form>
+</div>
+<div id="map-outer" style="width:800px;float:left">
+  <div id="map-canvas" style="left:0px;z-index:0;width:800px;height:800px; position: absolute;"></div>
+</div>
+</body>
+</html>

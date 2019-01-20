@@ -1,0 +1,44 @@
+<html>
+   <head>
+      <style type="text/css">
+         .BoxGlow_Grey2{
+         box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         -webkit-box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         -moz-box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         }
+         textarea#fastaText{
+         font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Typewriter', monospace;
+         }
+      </style>
+      <title>Loxodonta Localizer</title>
+      <link rel="stylesheet" type="text/css" href="{{staticPrefix}}/static/css/loxloc.css">
+      <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.min.css">
+     <script src="{{staticPrefix}}/static/js/external/jquery/jquery.js"></script>
+     <script src="{{staticPrefix}}/static/js/jquery-ui.js"></script>
+     <link href="{{staticPrefix}}/static/js/jquery-ui.css" rel="stylesheet">
+    <script src="{{staticPrefix}}/static/js/jquery.stickyPanel.js"></script>
+      <script language="JavaScript" src="{{staticPrefix}}/static/js/alignment.js"></script>
+      <link rel="stylesheet" href="{{staticPrefix}}/static/js/font-awesome-4.7.0/css/font-awesome.min.css"/>
+   </head>
+   <body>
+  
+      <div id="titlePanel"><a href="{{urlPrefix}}" style="color:#000;text-decoration:none"><i>Loxodonta</i> Localizer</a></div>
+      </div>
+      
+      
+       <div style="width:90%;  align:center;margin: 0 auto;">
+        <h3 class="itembar">Input sequence has errors</h3>
+        <ul>
+         {% for error in errors %}
+         <li>ERROR: {{error}}</li>
+         {% endfor %}
+        </ul>
+        <br/><br/>
+         
+         <h4>Your input seq:</h4>
+         <div style="width:80%;word-wrap:break-word;font-family:'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Typewriter', monospace;">
+         {{inputSeq}}</div>
+     </div>
+
+   </body>
+</html>

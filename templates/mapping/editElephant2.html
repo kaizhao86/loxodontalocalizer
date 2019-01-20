@@ -1,0 +1,392 @@
+<html>
+
+<head>
+    <title>{% if elephant %}Edit{% else %}Create{% endif %} Elephant</title>
+    <link rel="stylesheet" type="text/css" href="{{ staticPrefix }}/static/css/selectize.bootstrap3.css">
+    <script src="https://use.fontawesome.com/64dfa4ece3.js"></script>
+    <script src="{{ staticPrefix }}/static/js/external/jquery/jquery.js"></script>
+    <script type="application/javascript" src="{{ staticPrefix }}/static/js/selectize.min.js"></script>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCgkpTy0LBHXMSn5laRkqjEzCdUFEARgV4"></script>
+    <link rel="stylesheet" href="{{ staticPrefix }}/static/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/loxloc.css">
+    <script src="{{ staticPrefix }}/static/js/popper.min.js"></script>
+    <script src="{{ staticPrefix }}/static/js/bootstrap.min.js"></script>
+    <style type="text/css">
+        .BoxGlow_Grey2 {
+            box-shadow: 0 5px 15px rgba(176, 176, 176, 1);
+            -webkit-box-shadow: 0 5px 15px rgba(176, 176, 176, 1);
+            -moz-box-shadow: 0 5px 15px rgba(176, 176, 176, 1);
+        }
+        
+        textarea#textarea-seq {
+            font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Typewriter', monospace;
+        }
+        body{
+            padding:10px;
+        }
+    </style>
+
+    <script type="application/javascript">
+        "use strict";
+
+        var markers = [];
+        var map;
+        var selectedPub;
+        var createMode = true; 
+        {%if elephant %}
+        createMode = false; 
+        {% endif %} 
+        {%if elephant and elephant.author_id %} 
+        selectedPub = {{elephant.author_id}};
+        {% endif %}
+        var locDict = {{locDict | safe}};
+        var seqDict = {{seqDict | safe}};
+        var pubDict = {{pubDict | safe}};
+        var lhpiList = {{lhpiList | safe}};
+
+        function initialize() {
+            var mapOptions = {
+                center: {
+                    lat: -5,
+                    lng: 17
+                },
+                zoom: 4,
+                draggable: true,
+                zoomControl: true,
+                scrollwheel: false,
+                disableDoubleClickZoom: true,
+                mapTypeId: google.maps.MapTypeId.TERRAIN
+            };
+            map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+            locationChanged(); //draws initial placemark
+        }
+
+        function searchHaplotype() {
+            var seq = prompt("Please enter a sequence", "");
+
+            if (seq != null) {
+                var foundSeqID = null;
+                for (var seqID in seqDict) {
+                    if (seq.toUpperCase().trim() === seqDict[seqID]) {
+                        foundSeqID = seqID;
+                        break;
+                    }
+                }
+                if (foundSeqID === null) {
+                    alert("No exact matches")
+                } else {
+                    alert("Matched Haplotype:" + seqID);
+                    $("#select-haplotype").val(seqID);
+                }
+            }
+        }
+
+
+        function setAllMap(map) {
+            for (var i = 0; i < markers.length; i++) {
+                markers[i].setMap(map);
+            }
+        }
+
+        function haplotypeChanged() {
+            if ($("#select-haplotype").val() == null) {
+                return;
+            }
+            var haplotype = $("#select-haplotype").val();
+            $("#textarea-seq").text(seqDict[haplotype]);
+        }
+
+        function locationChanged() {
+            setAllMap(null); //deletes markers
+            markers = [];
+            if ($("#select-location").val() == null) {
+                return;
+            }
+            var loc = locDict[$("#select-location").val()];
+            $("#editLocLink").attr("href", "/mapping/editLocation/" + $("#select-location").val() + "/");
+
+            var marker = new google.maps.Marker({
+                map: map,
+                title: loc["locationName"],
+                label: loc["locationName"],
+                optimized: true,
+                zIndex: 0,
+                position: {
+                    lat: loc["lat"],
+                    lng: loc["lon"]
+                }
+            });
+            markers.push(marker);
+        }
+        // using jQuery
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function getLhpiList(){
+            let lhpiList = []
+            //Assume that for each lhpi_gba we have a matching lhpi_ne
+            $("input[name=lhpi_gba").each(function(){
+                let counter = this.id.split("_")[2];//Get the counter
+                let numElephants = $("#lhpi_ne_"+counter).val().trim()
+                lhpiList.push({"genBankAccession":this.value.trim(),"numElephants":numElephants})
+            })
+            return lhpiList;
+        }
+        function postForm() {
+            if (!checkForm()) {
+                return; //double-check if there's a form problem
+            }
+            var elephantID = ""; 
+            {%if elephant %}
+                elephantID = {{elephant.id}}; 
+            {% endif %}
+
+            var newAuthor = $("#select-author").val().trim();
+            var newHaplotype = $("#select-haplotype").val().trim();
+            var newLocation = parseInt($("#select-location").val().trim());
+            var newLastEditNotes = $("#input-lastEditNotes").val().trim();
+            var lhpiList = getLhpiList();
+            var data = {
+                csrfmiddlewaretoken: getCookie('csrftoken'),
+                "elephantID": elephantID,
+                "newHaplotype": newHaplotype,
+                "newAuthor": newAuthor,
+                "newLocation": newLocation,
+                "newLastEditNotes": newLastEditNotes,
+                "lhpiList":JSON.stringify(lhpiList)
+            };
+            $.ajax({
+                type: "POST",
+                url: "/mapping/editElephantJson/",
+                data: data,
+                success: function(data) {
+                    var status = data["status"];
+                    if (status == "success") {
+                        $('#saveBtn').hide()
+                        $("#saveSuccess").show()
+                        $("#saveFailed").hide()
+                    } else {
+                        $("#saveFailed").show()
+                    }
+                },
+                dataType: "json"
+            });
+        }
+
+        function checkForm() {
+            var newAuthor = $("#select-author").val().trim()
+            var newHaplotype = $("#select-haplotype").val().trim()
+            var newLocation = parseInt($("#select-location").val().trim());
+            var newLastEditNotes = $("#input-lastEditNotes").val().trim();
+            if (newAuthor != "" && newHaplotype != "" && newLocation != "") {
+                //If all fields are non-blank and something has changed, allow saving
+                $('#saveBtn').prop('disabled', false);
+                return true;
+            } else {
+                $('#saveBtn').prop('disabled', true);
+                return false;
+            }
+        }
+
+        function loadPubs() {
+            if (createMode) {
+                $('#select-author').append($('<option>', {
+                    value: "",
+                    text: "Choose a Publication",
+                    selected: "selected",
+                    disabled: "disabled",
+                    hidden: "hidden"
+                }));
+            }
+
+            for (var key in pubDict) {
+                if (key == selectedPub) {
+                    $('#select-author').append($('<option>', {
+                        value: key,
+                        text: "(" + key + ") " + pubDict[key]["author"],
+                        selected: "selected"
+                    }));
+                } else {
+                    $('#select-author').append($('<option>', {
+                        value: key,
+                        text: "(" + key + ") " + pubDict[key]["author"]
+                    }));
+                }
+            }
+        }
+        function delLhpi(i){
+            $("#lhpi_tr_"+i).remove()
+        }
+
+        function addLhpi(){
+            let htmlToWrite = "";
+            let highestCounter = 0;
+            $("input[name=lhpi_gba").each(function(){
+                let counter = parseInt(this.id.split("_")[2]);//Get the counter
+                highestCounter = Math.max(highestCounter,counter)
+            })
+            highestCounter++;
+            htmlToWrite+="<tr id='lhpi_tr_"+highestCounter+"'><td>"
+            htmlToWrite+="<input type='text' name='lhpi_gba' placeholder='GenBank Accession' id='lhpi_gba_"+highestCounter+"' value=''></td><td>&nbsp;&nbsp;"
+            htmlToWrite+="<input type='text' name='lhpi_ne' placeholder='# Elephants' id='lhpi_ne_"+highestCounter+"' value=''>"
+            htmlToWrite+="<td><button type='button' class='btn-small btn-warning' onclick='delLhpi("+highestCounter+")'>- Remove Entry</button></td></tr>"
+            $("#lhpiTable").append(htmlToWrite)
+        }
+
+        function populateLHPIs(){
+            var htmlToWrite = "<table id='lhpiTable'><tr><td colspan=3><em>Leave either GenBank Accession or # elephants empty, if unknown</em></td></tr>"
+                htmlToWrite+= "<tr><th>GenBank Accession</th><th># elephants</th><th></th></tr>"
+            for (let i=0;i<lhpiList.length;i++){
+                htmlToWrite+="<tr id='lhpi_tr_"+i+"'><td>"
+                htmlToWrite+="<input type='text' name='lhpi_gba' placeholder='GenBank Accession' id='lhpi_gba_"+i+"' value='"+lhpiList[i]["genBankAccession"]+"'></td><td>&nbsp;"
+                htmlToWrite+="<input type='text' name='lhpi_ne' placeholder='# Elephants' id='lhpi_ne_"+i+"' value='"+lhpiList[i]["numElephants"]+"'>"
+                htmlToWrite+="<td><button type='button' class='btn-small btn-warning' onclick='delLhpi("+i+")'>- Remove Entry</button></td></tr>"
+            }
+            htmlToWrite+="</table>"
+            
+            $("#lhpiDiv").html(htmlToWrite)
+
+        }
+
+        $(document).ready(function() {
+            //TODO remove this//google.maps.event.addDomListener(window, 'load', initialize);
+            $('#select-location').on('change', locationChanged);
+            $('#select-haplotype').on('change', haplotypeChanged);
+            populateLHPIs()
+            loadPubs();
+            $('form').on('keyup change', 'input, select, textarea', checkForm);
+            haplotypeChanged();
+            $("#select-location").selectize({
+                create: false
+            });
+            $("#select-author").selectize({
+                create: false
+            });
+        });
+
+
+    </script>
+    <style>
+        #map-canvas {
+            height: 750px;
+            width: 900px;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="titlePanel"><a href="{{urlPrefix}}/mapping/admin/" style="color:#000;text-decoration:none"><i>Loxodonta</i> Localizer</a> {% if elephant %}Edit{% else %}Create{% endif %} Elephant</div>
+
+    <div>
+
+        <form>
+
+            <!-- Columns are always 50% wide, on mobile and desktop -->
+            {% if elephant %}
+            <div class="row">
+                <div class="col-3"><label>Elephant#</label></div>
+                <div class="col-5"><input type="text" id="elephant_id" name="elephant_id" value="{{ elephant.id }}" readonly><br/></div>
+            </div>
+            {% endif %}
+            <div class="row">
+                <div class="col-3"><label>Genebank Accession(s) and #elephants<br/> </div>
+                <div class="col-8">
+                    <div id="lhpiDiv">
+                        
+                    </div>
+                    <button type="button" class="btn-small btn-secondary" id="addGenbankRowBtn" onclick="addLhpi()">+ Add Row</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3"><label for="select-haplotype">Select Haplotype</label></div>
+                <div class="col-5"><select id="select-haplotype" name="select-haplotype" class="form-control" tabindex="1">
+       {% if not elephant %}
+           <option value="" selected hidden disabled>Choose a Haplotype</option>
+        {% endif %}
+        {% for sequence in sequences %}
+          <option value="{{ sequence.id }}"
+                  {% if elephant and sequence.id == elephant.haplotype.id %}selected{% endif %}> {{ sequence.id }} </option>
+        {% endfor %}
+      </select></div>
+                <div class="col-4">
+                    <button type="button" class="btn btn-secondary" id="haplotypeSearch" onclick="searchHaplotype()">Search by Sequence</button>
+                    <!--  <button>New</button> -->
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-3"><label for="textarea-seq">Haplotype Seq.</label></div>
+                <div class="col-9"><textarea id="textarea-seq" class="form-control" rows="6" disabled>
+
+      </textarea></div>
+            </div>
+
+            <div class="row">
+                <div class="col-3"><label for="select-location">Select Location:</label></div>
+                <div class="col-5"><select id="select-location" name="select-location" class="form-control" tabindex="2">
+        {% if not elephant %}
+           <option value="" selected hidden disabled>Choose a Location</option>
+        {% endif %}
+        {% for location in locations %}
+          <option value="{{ location.id }}"
+                  {% if elephant and location.id == elephant.location.id %} }}
+                  selected
+                  {% endif %}>
+            {{ location.id }}
+            {% if location.locationName %}
+              {{ location.locationName }}, {% endif %}
+            {{ location.locality }}
+            {% if location.locationType %}({{ location.locationType }}){% endif %}</option>
+        {% endfor %}
+      </select></div>
+                <div class="col-2">
+                    <a href="" id="editLocLink">Edit Location</a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-3"><label for="select-author">Select Author</label></div>
+                <div class="col-5"><select id="select-author" name="select-author" class="form-control" tabindex="1">
+
+      </select></div>
+            </div>
+
+            <div class="row">
+                <div class="col-3"><label for="input-lastEditNotes">Editor's comments (Only for admins)</label></div>
+                <div class="col-5"><input type="text" id="input-lastEditNotes" name="input-lastEditNotes" value="{% if elephant %}{{ elephant.lastEditNotes }}{% endif %}"></div>
+            </div>
+
+
+            <button type="button" id="saveBtn" class="btn btn-primary" onclick="postForm()">Save</button>
+            <div class="alert alert-success" id="saveSuccess" style="display:none">
+                <strong>Save Successful</strong>
+            </div>
+
+
+            <div class="alert alert-warning" id="saveFailed" style="display:none">
+                <strong>Save Failed!</strong><span id="saveFailedMsg"></span>
+            </div>
+        </form>
+    </div>
+    <div id="map-outer" style="width:800px;float:left">
+        <div id="map-canvas" style="left:0px;z-index:0;width:800px;height:800px; position: absolute;"></div>
+    </div>
+</body>
+
+</html>

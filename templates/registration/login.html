@@ -1,0 +1,43 @@
+<html>
+   <head>
+      <style type="text/css">
+         .BoxGlow_Grey2{
+         box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         -webkit-box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         -moz-box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         }
+         textarea#fastaText{
+         font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Typewriter', monospace;
+         }
+      </style>
+      <title>Loxodonta Localizer Login</title>
+      <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCgkpTy0LBHXMSn5laRkqjEzCdUFEARgV4"></script>
+      <link rel="stylesheet" type="text/css" href="{{staticPrefix}}/static/css/loxlocResult.css">
+      <script src="https://use.fontawesome.com/64dfa4ece3.js"></script>
+    <script src="{{staticPrefix}}/static/js/external/jquery/jquery.js"></script>
+      <script language="JavaScript" src="{{staticPrefix}}/static/js/results.js?ver={{epoch}}"></script>
+
+      <script type="text/javascript" >
+        var alignments = {{alignmentsJSON | safe}};
+        var staticPrefix = "{{staticPrefix}}";
+        var seqName = "{{seqName}}";
+        var querySeq = "{{querySeq}}"
+      </script>
+
+      <style>
+      table.allData {
+      border-collapse:collapse;
+      }
+    tr.maingroup td{border-top:1px solid #000};
+      </style>
+   </head>
+   <body>
+         <div id="titlePanel"><a href="{{urlPrefix}}" style="color:#000;text-decoration:none"><i>Loxodonta</i> Localizer</a> Login</div>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Login</button>
+  </form>
+
+   </body></html>

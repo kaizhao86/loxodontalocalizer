@@ -1,0 +1,157 @@
+<html>
+   <head>
+      <style type="text/css">
+         .BoxGlow_Grey2{
+         box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         -webkit-box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         -moz-box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         }
+         textarea#fastaText{
+         font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Typewriter', monospace;
+         }
+      </style>
+      <title>Loxodonta Localizer</title>
+      <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCgkpTy0LBHXMSn5laRkqjEzCdUFEARgV4"></script>
+      <link rel="stylesheet" type="text/css" href="{{staticPrefix}}/static/css/loxlocResult.css?v=11">
+      <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+
+      <script src="https://use.fontawesome.com/64dfa4ece3.js"></script>
+    <script src="{{staticPrefix}}/static/js/external/jquery/jquery.js"></script>
+        <script src="{{staticPrefix}}/static/js/bootstrap.min.js"></script>
+      <script language="JavaScript" src="{{staticPrefix}}/static/js/results.js?ver={{epoch}}"></script>
+
+      <script type="text/javascript" >
+        var alignments = {{alignmentsJSON | safe}};
+        var locationPinsDict = {{locationPinsDict | safe}};
+        var staticPrefix = "{{staticPrefix}}";
+        var seqName = "{{seqName}}";
+        var querySeq = "{{querySeq}}"
+      </script>
+      
+      <style>
+      table.allData {
+      border-collapse:collapse;
+      }
+    tr.maingroup td{border-top:1px solid #000};        
+      </style>
+   </head>
+   <body>
+  
+      <div id="titlePanel"><a href="{{urlPrefix}}" style="color:#000;text-decoration:none"><i>Loxodonta</i> Localizer</a> Results   
+        {% if isAuthenticated %} Admin {% endif %}</div>
+      
+      <div style="width:100%;  align:center;margin: 0 auto;">
+      
+      <div id="map-outer" >
+      <div id="map-canvas" style="top:40px;left:0px;z-index:0;width:800px;height:800px; position: absolute;"></div>
+      <div id="labelsSVG" style="top:730px;left:20px;z-index:1;width:300px;height:80px; position: absolute;background-color:#AAAAAA;padding:10px">
+        <div style="font-weight:600;font-family:Arial, Helvetica, sans-serif;font-size:16px;width:100%">LEGEND</div>
+        <img id="legend0" src="/static/images/accuracy0.png" height="15px"/>Only country information reported<br/>
+           <img id="legend1" src="/static/images/accuracy1.png" height="15px"/>Locality information available
+           
+       
+      </div>
+
+      
+      </div>
+      <div></div>
+      <div id="resultsDiv">
+      <div style="width:80%"><strong>Note:</strong> Increasing the size of the map will improve resolution among closely spaced icons on the map, but will not provide added precision to the geographic provenance of sequenced samples.</div>
+      <form action="{{urlPrefix}}" method="POST"><input type="hidden" id="seqName" name="seqName" value="{{seqName}}">{% csrf_token %}
+        <input type="hidden" name="querySeq" id="querySeq" value="{{querySeq}}"><button type="submit" onclick="" style="border:none;outline:none;background:none;cursor:pointer;color:#0000EE;padding:0;font-size:18px">Return to input page</button></a></form><br/>
+        <input type="checkbox" id="chkProtectedArea" checked/><label for="chkProtectedArea">&nbsp;Show Protected Areas</label>
+        <span id="protectedAreaMemo"><br/>&nbsp;&nbsp;&nbsp;&nbsp;<span style='border:2px solid #EBF22B'>Shown in yellow outline</span></span><br/>
+        <input type="checkbox" id="chkEleRange" checked/><label for="chkEleRange">&nbsp;Show African Elephant Range</label>
+        <span id="elephantRangeMemo"> <br/>&nbsp;&nbsp;&nbsp;&nbsp;Dark Purple - Known Range<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;Light Purple - Possible Range<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;Grey - Doubtful Range
+        </span>
+      
+      <br/>             <div style="page-break-before:always"><br/>
+      Timestamp: {{datetime}} Greenwich Mean Time<br/>
+      Description and sequence provided:<br/>
+      <div style="font-family:'Courier New', Courier, monospace;width:400px;word-wrap:break-word">>{{seqName}}<br/>{{querySeq}}</div>
+
+    </div><br/>
+            <div><input type="checkbox" id="chkShowAll" onclick="update()" checked/><label for="chkShowAll">&nbsp;Show All Locations</label>
+            </div>
+
+
+
+
+  <style>
+    .allDataTable{
+      display: table
+    }
+    .allDataTr{
+      display: table-row
+    }
+    .allDataTd{
+      display: table-cell
+    }
+  </style>
+  <div class="allDataTable" >
+      
+    {% for alignment in alignments %}
+      {% if alignment.scoreLine %}
+       <hr class="hrThick" style="border-top:5px solid #000"/>
+     {% endif %}
+      {% if alignment.finalScoreDisclaimer %}
+      <div class="row">
+        <div class="col-sm-12" style="font-weight:bold">
+          Haplotypes with more than 2 mismatches may provide less useful information
+                  <hr class="hrThick" style="border-top:5px solid #000"/></div>
+      </div>
+     {% endif %}
+     <div class="row">
+      <div class="col-sm-2">&nbsp;
+        <i name="detailExpander" id="expand_{{alignment.subjectID}}" class="fa {% if forloop.counter < 2 %}fa-minus-square-o{% else %}fa-plus-square-o{% endif %}"></i>
+      &nbsp;<input type="checkbox" name="subjectCheckbox" id="subjectChk_{{alignment.subjectID}}" {% if forloop.counter < 2 %} checked {% endif %}/>
+      </div>
+      <div class="col-sm-5">Mismatches: {{alignment.mismatch}} bp <br/> Matches: {{alignment.score}} bp
+      </div>
+      <div class="col-sm-5">Haplotype: {{alignment.subjectID}} <br/> 
+        <input type="checkbox"  name="alignmentCheckbox" id="alignmentChk_{{alignment.subjectID}}"/>&nbsp;<label for="alignmentChk_{{alignment.subjectID}}">Show Alignment</label>
+      </div>
+    </div>
+
+    <div name="alignmentDiv" class="row"  id="alignmentDiv_{{alignment.subjectID}}" style="font-family:monospace;display:none;">
+      <div class="col-sm-1">&nbsp;</div>  
+      <div class="col-sm-9" style="font-family:monospace" >
+          {{alignment.alignmentToPrint | safe}}
+      </div>
+    </div>
+    <div class="row" name="detailsDiv" id="detailsDiv_{{alignment.subjectID}}" {% if forloop.counter >= 2 %} style="display:none" {% endif %}>
+      <div class="col-sm-1">&nbsp;</div>
+      <div class="col-sm-11" >
+            {% for elephant in alignment.elephants %}
+            <div>
+             &nbsp;&nbsp;
+               <input type="checkbox" name="elephantCheckbox" id="subjectChk_{{elephant.id}}" {% if forloop.parentloop.counter < 2 %} checked {% endif %}/>
+               &nbsp;
+               <img id="placemarkSmall_{{elephant.id}}}" {% if forloop.parentloop.counter > 2 %} style="display:none" {%endif%} src="{{elephant.smallimage}}" height="15px"/>
+               <img id="placemarkSmall_{{elephant.id}}}" {% if forloop.parentloop.counter <= 2 %} style="display:none" {%endif%} src="{{elephant.smallimage}}" height="15px"/>
+               &nbsp;
+                {% if isAuthenticated %} <label for="subjectChk_{{elephant.id}}">{% endif %}
+               {%if elephant.locationName %}{{elephant.locationName}},&nbsp;{% endif %}{{elephant.locality}} </label>
+               {% if elephant.accuracy == 0 %}
+                (Country)
+               {% elif elephant.accuracy == 1 %}
+                (Region)
+               {% elif elephant.accuracy == 2  %}
+                (Locality)
+               {% endif %}
+               {%if elephant.genbankAccessionHTML %} &nbsp;&nbsp; {{ elephant.genbankAccessionHTML | safe }} {% endif %}    {%if elephant.author %} &nbsp;&nbsp;<a href="{{elephant.paperurl}}" target="_blank">{{elephant.author}} </a>{% endif %}
+               {% if isAuthenticated %}<br/>&nbsp;&nbsp;<a href="/mapping/editElephant/{{ elephant.id }}/" target="_blank">(Edit Ele.)</a>
+               &nbsp; <a href="/mapping/editLocation/{{ elephant.locationID }}/" target="_blank">(Edit Loc.)</a>
+               {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    
+    {% endfor %} 
+  </div>
+   </body>
+</html>

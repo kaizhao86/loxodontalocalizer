@@ -1,0 +1,106 @@
+<html>
+<head>
+
+
+<style>#map {
+  height: 600px;
+  width: 800px;
+}</style>
+    <script src="{{staticPrefix}}/static/js/external/jquery/jquery.js"></script>
+          <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCgkpTy0LBHXMSn5laRkqjEzCdUFEARgV4"></script>
+<script type="text/javascript" >
+
+var map;
+var locations = [];
+
+function initialiseMap() {
+
+  $.getJSON("https://sheets.googleapis.com/v4/spreadsheets/1B7rPM3um2nI8A1iHbSpspc7Za623lYQ2Y-8dZTgtjcs/values/elephants!A3:O?key=AIzaSyCgkpTy0LBHXMSn5laRkqjEzCdUFEARgV4", function(data) {
+  
+       
+    	// data.values contains the array of rows from the spreadsheet. Each row is also an array of cell values.
+    	// Modify the code below to suit the structure of your spreadsheet.
+    	$(data.values).each(function() {
+    		var location = {};
+                if (this[4]=="TRUE"){
+                    location.id = this[0];
+                    location.locationName = this[6];
+                    location.latitude = parseFloat(this[8]);
+                    location.longitude = parseFloat(this[7]);
+                    location.genBank = this[1];
+                    location.matchNotes = this[10];
+                    location.locality = this[11];
+                    location.locationType = this[9];
+                    location.author = this[13];
+                    locations.push(location);
+                }
+
+    	});
+
+      // Center on (0, 0). Map center and zoom will reconfigure later (fitbounds method)
+      var mapOptions = {
+        zoom: 10,
+        center: new google.maps.LatLng(0, 0)
+      };
+      
+      var map = new google.maps.Map(document.getElementById('map'), mapOptions);
+      setLocations(map, locations);
+  });
+}
+
+
+function setLocations(map, locations) {
+  var bounds = new google.maps.LatLngBounds();
+  // Create nice, customised pop-up boxes, to appear when the marker is clicked on
+  var infowindow = new google.maps.InfoWindow({
+    content: "Content String"
+  });
+  for (var i = 0; i < locations.length; i++) {
+    var new_marker = createMarker(map, locations[i], infowindow);
+    bounds.extend(new_marker.position);
+  }
+  map.fitBounds(bounds);
+}
+
+function createMarker(map, location, infowindow) {
+
+  // Modify the code below to suit the structure of your spreadsheet (stored in variable 'location')
+  var position = {
+    lat: parseFloat(location.latitude),
+    lng: parseFloat(location.longitude)
+  };
+  var marker = new google.maps.Marker({
+    position: position,
+    map: map,
+    title: location.title,
+  });
+  google.maps.event.addListener(marker, 'click', function() {
+    infowindow.setContent('<div>'+
+    '<p><strong>id:&nbsp;</strong>' + location.id + '</p>' +
+    '<p><strong>genBank:&nbsp;</strong>' + location.genBank + '</p>' +
+    '<p><strong>locationName:&nbsp;</strong>' + location.locationName + '</p>' +
+    '<p><strong>locality:&nbsp;</strong>' + location.locality + '</p>' +
+    '<p><strong>locationType:&nbsp;</strong>' + location.locationType + '</p>' +
+    '<p><strong>matchNotes:&nbsp;</strong>' + location.matchNotes + '</p>' +
+    '<p><strong>author:&nbsp;</strong>' + location.author + '</p>' +
+    '</div>');
+    infowindow.open(map, marker);
+  });
+  return marker;
+}
+
+$().ready(function() {
+initialiseMap()
+})
+</script>
+
+
+</head>
+
+
+<h3>Edit locations from LL Google Documents spreadsheet</h3>
+<div><a href="https://docs.google.com/spreadsheets/d/1B7rPM3um2nI8A1iHbSpspc7Za623lYQ2Y-8dZTgtjcs/edit#gid=1596540091" target="_blank">Link to Google Docs Spreadsheet</a> (To update map, save in the spreadsheet then reload this page)</div>
+<div id="map"></div>
+<!-- Replace the value of the key parameter in the call to the Google Maps JavaScript API URL below with your own API key. -->
+
+</html>

@@ -1,0 +1,125 @@
+<html>
+   <head>
+      <style type="text/css">
+         .BoxGlow_Grey2{
+         box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         -webkit-box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         -moz-box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         }
+         textarea#fastaText{
+         font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Typewriter', monospace;
+         }
+      </style>
+      <title>Loxodonta Localizer</title>
+      <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCgkpTy0LBHXMSn5laRkqjEzCdUFEARgV4"></script>
+      <link rel="stylesheet" type="text/css" href="{{staticPrefix}}/static/css/loxlocResult.css">
+      <script src="https://use.fontawesome.com/64dfa4ece3.js"></script>
+    <script src="{{staticPrefix}}/static/js/external/jquery/jquery.js"></script>
+      <script language="JavaScript" src="{{staticPrefix}}/static/js/showall.js?ver=1"></script>
+
+      <script type="text/javascript" >
+        var staticPrefix = "{{staticPrefix}}"
+      </script>
+      
+      <style>
+      table.alignments {
+      border-collapse:collapse;
+      }
+    tr.maingroup td{border-top:1px solid #000};
+
+
+        
+      </style>
+   </head>
+   <body>
+  
+      <div id="titlePanel"><a href="{{urlPrefix}}" style="color:#000;text-decoration:none"><i>Loxodonta</i> Localizer</a> Results</div>
+      
+      <div style="width:100%;  align:center;margin: 0 auto;">
+      
+              
+      <div id="map-canvas" style="width:800px;float:left "></div>
+
+      <div id="resultsDiv" style="margin-left: 800px;padding:5px;calc(100% - 800px)"> 
+      
+      <input type="checkbox" id="chkProtectedArea" checked/><label for="chkProtectedArea">&nbsp;Show Protected Areas</label>
+      <span id="protectedAreaMemo"><br/>&nbsp;&nbsp;&nbsp;&nbsp;<span style='border:2px solid #EBF22B'>Shown in yellow outline</span></span><br/>
+      <input type="checkbox" id="chkEleRange" checked/><label for="chkEleRange">&nbsp;Show African Elephant Range</label>
+     <span id="elephantRangeMemo"> <br/>&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color:#413470;color:#FFF">Shown in purple</span></span>
+     
+      <br/>
+      <i id="expand_protectedArea" class="fa fa-plus-square-o"></i> More information
+      <div id="protectedAreaAdditionalInfo" style="margin:10px;display:none;width:350px">
+      
+      <strong>African Elephant Range and Protected Areas</strong> are copyright IUCN - The International Union for the Conservation of Nature and is maintained the IUCN SSC African Elephant Specialist Group (AfESG).
+            </div>
+      
+      
+      
+    <div class="outerDetails">
+     {% for loc in locs %}
+
+        
+        <div><i name="detailExpander" id="expand_{{loc.locationName}}" class="fa fa-plus-square-o"></i>
+             <input type="checkbox" name="subjectCheckbox" id="subjectChk_{{loc.locationName}}" /><strong>{{loc.locationName}}</strong>
+        </div>
+    
+    
+    {% endfor %}  
+    
+    </div>
+    
+    <!--
+    <table class="alignments">
+    
+    
+   
+    <tr class="maingroup">
+        <td colspan="2">&nbsp;<i name="detailExpander" id="expand_{{loc.locationName}}" class="fa fa-minus-square-o"></i>
+        <input type="checkbox" name="subjectCheckbox" id="subjectChk_{{loc.locationName}}" /><strong>{{loc.locationName}}</strong></td>
+    </tr>
+    <tr>
+        
+        <td>Haplotype: {{alignment.subjectID}} <br/> <input type="checkbox"  name="alignmentCheckbox" id="alignmentChk_{{alignment.subjectID}}"/>&nbsp;<label for="alignmentChk_{{alignment.subjectID}}">Show Alignment</label></td>
+       
+    </tr>
+    
+    <tr name="alignmentTr" style="padding: 0">
+    <td  style="padding: 0"></td>
+     <td colspan="4">
+
+      
+        <div name="alignmentDiv" id="alignmentDiv_{{alignment.subjectID}}"style="font-family:monospace;display:none;">
+            {{alignment.alignmentToPrint | safe}}
+        </div>
+     </td>
+     
+    </tr>
+    <tr name="detailsTr" style="padding: 0">
+    
+    <td  style="padding: 0"></td>
+        <td name="detailsTd" colspan="4"  style="padding: 0">
+        <div name="detailsDiv" id="detailsDiv_{{alignment.subjectID}}" {% if forloop.counter >= 2 %} style="display:none" {% endif %}>
+            {% for elephant in alignment.elephants %}
+            <div>
+             &nbsp;&nbsp;
+               <input type="checkbox" name="elephantCheckbox" id="subjectChk_{{elephant.id}}" {% if forloop.parentloop.counter < 2 %} checked {% endif %}/>
+               &nbsp;<label for="subjectChk_{{elephant.id}}">#{{elephant.id}}&nbsp;
+               {{elephant.locationName}}&nbsp;</label>
+               {%if elephant.accession %} {{elephant.accession}} {% endif %}            &nbsp;
+            </div>
+            {% endfor %}
+        </div></td>
+    
+    </tr  
+    </table>    
+     -->
+      </div>
+    
+            
+      
+      </div>
+	  
+    <div>
+   </body>
+</html>

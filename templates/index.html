@@ -1,0 +1,116 @@
+<html>
+   <head>
+      <style type="text/css">
+         .BoxGlow_Grey2{
+         box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         -webkit-box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         -moz-box-shadow: 0 5px 15px rgba(176,176,176, 1);
+         }
+         textarea#fastaText{
+         font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Typewriter', monospace;
+         }
+      </style>
+      <title>Loxodonta Localizer</title>
+  
+      <link rel="stylesheet" type="text/css" href="{{staticPrefix}}/static/css/loxloc.css">
+      <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.min.css">
+    <script src="{{staticPrefix}}/static/js/external/jquery/jquery.js"></script>
+    <script src="{{staticPrefix}}/static/js/jquery-ui.js"></script>
+    <link href="{{staticPrefix}}/static/js/jquery-ui.css" rel="stylesheet">
+    <script src="{{staticPrefix}}/static/js/jquery.stickyPanel.js"></script>
+      <script language="JavaScript" src="{{staticPrefix}}/static/js/ui.js?ver=2"></script>
+         <script language="JavaScript">
+         var all_seqs = {{all_seqs | safe}}
+         $(document).ready(function(){
+            var keys = Object.keys(all_seqs).sort();
+            
+            for(var i=0;i<keys.length;i++){
+                var key = keys[i];
+                $('#demoSeqOption').append($('<option>', { 
+                  value: key,
+                  text : key 
+              }));
+            }
+            $('#demoSeqOption').change(function(){
+            
+                var key = $("#demoSeqOption").val();
+                $("#fastaText").val(">"+key+"\n"+all_seqs[key])
+            });
+            
+            $("#seqClear").click(function(event) {
+                $("#fastaText").val("");
+            });
+
+         });
+         
+      
+         </script>
+   </head>
+   <body>
+  
+      <div id="titlePanel"><i>Loxodonta</i> Localizer
+      </div>
+      <div  style="width:90%;  align:center;margin: 0 auto;">
+         <h3 class="itembar">Introduction</h3>
+         <div class="item">
+            <ul style="margin-left: 20px;">
+               <li> 
+                  <b><i>Loxodonta</i> Localizer</b> maps the localities from which mitochondrial DNA sequences have been reported for African elephants, <i>Loxodonta africana</i> and <i>L. cyclotis</i>, using the dataset described in 
+                  <a href="http://onlinelibrary.wiley.com/doi/10.1111/j.1752-4571.2012.00286.x/abstract" target="_blank">Ishida et al., 2013</a>, updated with additional sequences. 
+               </li>
+               <br/>
+               <li>Enter a 316 bp mitochondrial control region sequence from an African elephant sample to display the localities from which elephant samples with similar sequences have been reported.</li>
+            </ul>
+         </div>
+         <h3 class="itembar">Input sequences</h3>
+         <div class="item">
+            <form id="alignForm" action="{{urlPrefix}}mapping/aligning/" method="POST">
+         
+            
+            {% csrf_token %} 
+               <label for="fastaText">Enter a mitochondrial sequence that is <a href="{{staticPrefix}}/static/images/LL-protocol-trim-sequences.pdf" target="_blank"> appropriately trimmed:</a></label> <br/>
+               <textarea name="fastaText" id="fastaText" rows="8" cols="80">{{fastaTextInitial}}</textarea>
+               <br/><br/>
+                <label for="demoSeq">Or select an existing sequence for demonstration:&nbsp;&nbsp;</label> 
+                  <select id="demoSeqOption">
+                <option disabled selected value="null">Select an existing sequence</option> <!-- TODO: We could use selectize-->
+                
+            </select><br/><br/>
+               <input type="submit" class="submitButton" id="seqSubmit" value="Submit" onclick="changeSubmit()">
+               <input type="button"  class="clearButton" id="seqClear" value="Clear">
+            </form>
+         </div>
+		
+        
+         <h3 class="itembar">Citation</h3>
+         <div class="item">Citation for this software is pending. The citation for the haplotype dataset is: <br/>
+            <a href="http://onlinelibrary.wiley.com/doi/10.1111/j.1752-4571.2012.00286.x/full" target="_blank">Ishida et al., 2013</a> </li><br/>
+         </div>
+         
+         <h3 class="itembar">Additional Information</h3>
+        <div class="item">
+        
+        <div><a href="{{staticPrefix}}/static/images/LL-Help-FAQ.pdf" target="_blank"><strong>Help, FAQ and additional references</strong></a></div><br/>
+        
+        <div><strong>Protocols:</strong> DNA from dung may be extracted using commercially available fecal DNA extraction kits. We here provide a  <a href="{{staticPrefix}}/static/images/LL_Ivory_aDNA_Extraction_Malhi_Lab.pdf" target="_blank">protocol</a> 
+       
+        for extraction of DNA from ivory, a <a href="{{staticPrefix}}/static/images/LL-protocol-sequence-dung.pdf" target="_blank">protocol</a> 
+        for amplification and Sanger sequencing of DNA from dung or ivory, and a <a href="{{staticPrefix}}/static/images/LL-protocol-trim-sequences.pdf" target="_blank">protocol</a> 
+        for trimming the sequences. Alternative protocols may also be available in the published literature for each of these steps.</div><br/>
+        
+        <div><strong>Note:</strong> As occurs between hybridizing species when females are non-dispersing (Petit and Excoffier 2009; Trends Ecol Evol 7:386), elephant mitochondrial markers are not helpful for establishing species boundaries, but are helpful for establishing geographic provenance (<a href="http://onlinelibrary.wiley.com/doi/10.1111/j.1752-4571.2012.00286.x/full" target="_blank">Ishida et al., 2013</a>). Papers by other authors that were the source of sequences are listed in the FAQs.</div><br/>
+        
+         
+         <div style="font-size:12px">
+         <strong>Disclaimer:</strong> <i>The Loxodonta Localizer web site is provided as a service to the public. We are not responsible for, and expressly disclaim all liability for, damages of any kind arising out of use, reference to, or reliance on any information contained within the site. While the information contained within the site may be periodically updated, no guarantee is given that the information provided in this web site is correct, complete, and up-to-date. For any links providing direct access to other Internet resources, including Web sites, we are not responsible for the accuracy or content of information contained in those sites. Links or mentions do not constitute an endorsement of the parties or their products and services.</i>
+         </div>
+          </div>
+       
+         
+         
+      </div>
+      
+	  
+
+   </body>
+</html>

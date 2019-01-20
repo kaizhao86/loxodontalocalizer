@@ -1,0 +1,106 @@
+<html>
+
+<head>
+    <script src="https://use.fontawesome.com/64dfa4ece3.js"></script>
+    <style type="text/css">
+        .BoxGlow_Grey2 {
+            box-shadow: 0 5px 15px rgba(176, 176, 176, 1);
+            -webkit-box-shadow: 0 5px 15px rgba(176, 176, 176, 1);
+            -moz-box-shadow: 0 5px 15px rgba(176, 176, 176, 1);
+        }
+        
+        textarea#fastaText {
+            font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Typewriter', monospace;
+        }
+    </style>
+    <title>Loxodonta Localizer Editor</title>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCgkpTy0LBHXMSn5laRkqjEzCdUFEARgV4"></script>
+    <link rel="stylesheet" type="text/css" href="{{staticPrefix}}/static/css/loxlocResult.css">
+    <script src="{{staticPrefix}}/static/js/external/jquery/jquery.js"></script>
+
+    <link rel="stylesheet" href="{{ staticPrefix }}/static/css/bootstrap.min.css">
+    <script src="{{ staticPrefix }}/static/js/popper.min.js"></script>
+    <script src="{{ staticPrefix }}/static/js/bootstrap.min.js"></script>
+    <script src="https://use.fontawesome.com/64dfa4ece3.js"></script>
+
+
+    <style>
+        table.allData {
+            border-collapse: collapse;
+        }
+        
+        tr.maingroup td {
+            border-top: 1px solid #000
+        }
+        
+        ;
+    </style>
+</head>
+
+<body>
+    <div id="titlePanel"><a href="{{urlPrefix}}/mapping/admin/" style="color:#000;text-decoration:none"><i>Loxodonta</i> Localizer</a> Mapping Admin</div>
+
+    <div>
+        <div class="row">
+            <div class="col-4">Currently logged in as {{ user.get_username }}.</div>
+            <div class="col-4"><a href="/logout/">Logout</a></div>
+
+        </div>
+        <div class="row">
+            <div class="col-2"><a href="/mapping/createLocation/">Create New Location</a></div>
+            <div class="col-10"></div>
+        </div>
+        <div class="row">
+            <div class="col-2"><a href="/mapping/createElephant/">Create New Elephant</a></div>
+            <div class="col-10"><em>"Elephants" are a haplotype at a given location</em></div>
+        </div>
+        <div class="row">
+            <div class="col-2"><a href="/mapping/createHaplotype/">Create New Haplotype</a></div>
+            <div class="col-10"></div>
+        </div>
+    </div>
+    <br/><br/>
+
+    <hr/>
+
+    <h2>Existing Elephants by Location</h2>
+    {% for locGroup in locGroups %}
+    <div>
+        <h5>Location: <a href="/mapping/editLocation/{{ locGroup.location.id }}/">{{ locGroup.location.id }}  {% if locGroup.location.locationName %}
+              {{ locGroup.location.locationName }}, {% endif %}
+            {{ locGroup.location.locality }}
+            {% if locGroup.location.locationType %}({{ locGroup.location.locationType }}){% endif %} (Edit)</a></a>
+        </h5>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Haplotype ID</th>
+                    <th>Genbank Accession(s)</th>
+                    <th>Author</th>
+                    <th>Last Modified (US/Central)</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% for elephant in locGroup.elephantsAtThisLocation %}
+                <tr>
+                    <th scope="row"><a href="/mapping/editElephant/{{ elephant.pk }}/">{{ elephant.pk }} (Edit)</a></th>
+                    <td>{{ elephant.haplotype.pk }}</td>
+                    <td> {{ elephant.accessions | safe}}</td>
+                    <td>{{ elephant.author.author }}</td>
+                    <td>{% load tz %}{% timezone "US/Central" %}{{ elephant.datetimeModified }}{% endtimezone %}</td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+
+
+
+</body>
+
+</html>
