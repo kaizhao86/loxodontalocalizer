@@ -6,7 +6,7 @@ certifi==2018.11.29
 cfn-flip==1.1.0.post1
 chardet==3.0.4
 Click==7.0
-Django==1.11.18
+Django==2.2.24
 django-cors-headers==2.4.0
 docutils==0.14
 durationpy==0.5
